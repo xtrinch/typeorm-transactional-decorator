@@ -1,31 +1,39 @@
+import delay from 'delay'
 import 'reflect-metadata'
-
-import { initializeTransactionalContext, patchTypeORMRepositoryWithBaseRepository, runInTransaction, runOnTransactionCommit, runOnTransactionRollback, wrapInTransaction } from '../../src'
-import { createConnection, getConnection } from 'typeorm'
-import delay from 'delay';
+import { DataSource } from 'typeorm'
+import {
+  initializeTransactionalContext,
+  patchTypeORMRepositoryWithBaseRepository,
+  runInTransaction,
+  runOnTransactionCommit,
+  runOnTransactionRollback,
+  wrapInTransaction,
+} from '../../src'
 import { Post } from '../entity/Post'
 import { SimpleService } from '../simple/simple.service'
 
 describe('Simple', () => {
+  let dataSource: DataSource
+
   beforeAll(async () => {
     initializeTransactionalContext()
     patchTypeORMRepositoryWithBaseRepository()
-    const conn = await createConnection({
+    dataSource = new DataSource({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'postgres',
+      password: '1Qazxsw2',
       entities: [Post],
       synchronize: true,
       logging: 'all',
     })
   })
 
-  afterAll(async () => await getConnection().close())
+  afterAll(async () => await dataSource.destroy())
 
   it('Creates a post using service', async () => {
-    const repository = getConnection().getRepository(Post)
+    const repository = dataSource.getRepository(Post)
     const service = new SimpleService(repository)
     const message = 'simple - A successful post'
     const post = await service.createPost(message)
@@ -41,7 +49,7 @@ describe('Simple', () => {
   })
 
   it('Fails creating a post using service', async () => {
-    const repository = getConnection().getRepository(Post)
+    const repository = dataSource.getRepository(Post)
     const service = new SimpleService(repository)
     const message = 'simple - An unsuccessful post'
     expect(service.createPost(message, true)).rejects.toThrow()
@@ -56,92 +64,104 @@ describe('Simple', () => {
   })
 
   it('Create a post using wrapInTransaction', async () => {
-    const repository = getConnection().getRepository(Post)
-    const post = new Post();
+    const repository = dataSource.getRepository(Post)
+    const post = new Post()
     const message = 'simple - An successful post using wrapInTransaction'
-    post.message = message;
-    let commitHookCalled = false;
+    post.message = message
+    let commitHookCalled = false
 
-    const result = await (wrapInTransaction(async () => {
-      const createdPost = await repository.save(post);
-      runOnTransactionCommit(() => {
-        commitHookCalled = true
-      });
-      return createdPost;
-    }))()
+    const result = await wrapInTransaction(
+      async () => {
+        const createdPost = await repository.save(post)
+        runOnTransactionCommit(() => {
+          commitHookCalled = true
+        })
+        return createdPost
+      },
+      { dataSource }
+    )()
 
-    await delay(10);
+    await delay(10)
 
     expect(post.id).toBeGreaterThan(0)
-    expect(commitHookCalled).toBeTruthy();
-    expect(repository.findOne({ message })).resolves.toBeTruthy();
-  });
+    expect(commitHookCalled).toBeTruthy()
+    expect(repository.findOne({ where: { message } })).resolves.toBeTruthy()
+  })
 
   it('Fails creating a post using using wrapInTransaction', async () => {
-    const repository = getConnection().getRepository(Post)
-    const post = new Post();
+    const repository = dataSource.getRepository(Post)
+    const post = new Post()
     const message = 'simple - An failed post using wrapInTransaction'
-    post.message = message;
-    let rollbackHookCalled = false;
+    post.message = message
+    let rollbackHookCalled = false
 
     expect(
-      wrapInTransaction(async () => {
-        const createdPost = await repository.save(post);
-        runOnTransactionRollback(() => {
-          rollbackHookCalled = true
-        });
-        throw new Error('failing')
-      })()
-    ).rejects.toThrow();
+      wrapInTransaction(
+        async () => {
+          const createdPost = await repository.save(post)
+          runOnTransactionRollback(() => {
+            rollbackHookCalled = true
+          })
+          throw new Error('failing')
+        },
+        { dataSource }
+      )()
+    ).rejects.toThrow()
 
-    await delay(100);
+    await delay(100)
 
-    expect(rollbackHookCalled).toBeTruthy();
-    expect(repository.findOne({ message })).resolves.toBeUndefined();
-  });
+    expect(rollbackHookCalled).toBeTruthy()
+    expect(repository.findOne({ where: { message } })).resolves.toBeUndefined()
+  })
 
   it('Create a post using runInTransaction', async () => {
-    const repository = getConnection().getRepository(Post)
-    const post = new Post();
+    const repository = dataSource.getRepository(Post)
+    const post = new Post()
     const message = 'simple - An successful post using runInTransaction'
-    post.message = message;
-    let commitHookCalled = false;
+    post.message = message
+    let commitHookCalled = false
 
-    const result = await runInTransaction(async () => {
-      const createdPost = await repository.save(post);
-      runOnTransactionCommit(() => {
-        commitHookCalled = true
-      });
-      return createdPost;
-    })
+    const result = await runInTransaction(
+      async () => {
+        const createdPost = await repository.save(post)
+        runOnTransactionCommit(() => {
+          commitHookCalled = true
+        })
+        return createdPost
+      },
+      { dataSource }
+    )
 
     await delay(100)
 
     expect(post.id).toBeGreaterThan(0)
-    expect(commitHookCalled).toBeTruthy();
-    expect(repository.findOne({ message })).resolves.toBeTruthy();
-  });
+    expect(commitHookCalled).toBeTruthy()
+    expect(repository.findOne({ where: { message } })).resolves.toBeTruthy()
+  })
 
   it('Fails creating a post using using runInTransaction', async () => {
-    const repository = getConnection().getRepository(Post)
-    const post = new Post();
+    const repository = dataSource.getRepository(Post)
+    const post = new Post()
     const message = 'simple - An failed post using runInTransaction'
-    post.message = message;
-    let rollbackHookCalled = false;
+    post.message = message
+    let rollbackHookCalled = false
 
     expect(
-      runInTransaction(async () => {
-        const createdPost = await repository.save(post);
-        runOnTransactionRollback(() => {
-          rollbackHookCalled = true
-        });
-        throw new Error('failing')
-      })
-    ).rejects.toThrow();
+      runInTransaction(
+        async () => {
+          const createdPost = await repository.save(post)
+          runOnTransactionRollback(() => {
+            rollbackHookCalled = true
+          })
+          throw new Error('failing')
+        },
+        { dataSource }
+      )
+    ).rejects.toThrow()
 
-    await delay(100);
+    await delay(100)
 
-    expect(rollbackHookCalled).toBeTruthy();
-    expect(repository.findOne({ message })).resolves.toBeUndefined();
-  });
+    expect(rollbackHookCalled).toBeTruthy()
+    expect(repository.findOne({ where: { message } })).resolves.toBeUndefined()
+  })
 })

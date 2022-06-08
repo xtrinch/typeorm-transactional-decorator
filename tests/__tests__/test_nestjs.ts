@@ -17,7 +17,7 @@ describe('NestJS', () => {
           host: 'localhost',
           port: 5432,
           username: 'postgres',
-          password: 'postgres',
+          password: '1Qazxsw2',
           entities: [Post],
           synchronize: true,
           logging: 'all',
