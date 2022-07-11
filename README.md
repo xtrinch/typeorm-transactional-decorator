@@ -1,6 +1,6 @@
 # typeorm-transactional-decorator
 
-A `Transactional` Method Decorator for [typeorm](http://typeorm.io/) that uses [cls-hooked](https://www.npmjs.com/package/cls-hooked) to handle and propagate transactions between different repositories and service methods.
+A `Transactional` Method Decorator for [typeorm](http://typeorm.io/) that uses [cls-hooked](https://www.npmjs.com/package/cls-hooked) to handle and propagate transactions between different repositories and service methods. Compatible only with NestJS and typeorm 0.3.x+
 
 Inspired by [Spring Transactional](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/Transactional.html) Annotation and [Sequelize CLS](http://docs.sequelizejs.com/manual/tutorial/transactions.html)
 
