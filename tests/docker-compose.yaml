@@ -1,10 +1,11 @@
-version: '3'
+version: '3.4'
 services:
   postgres:
     image: postgres:alpine
     ports:
-      - '5432:5432'
+      - ${DB_PORT}:${DB_PORT}
+    command: -p ${DB_PORT}
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: test
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
