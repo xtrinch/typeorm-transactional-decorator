@@ -1,6 +1,4 @@
-# typeorm-transactional-cls-hooked
-[![npm version](http://img.shields.io/npm/v/typeorm-transactional-cls-hooked.svg?style=flat)](https://npmjs.org/package/typeorm-transactional-cls-hooked "View this project on npm")
-
+# typeorm-transactional-decorator
 
 A `Transactional` Method Decorator for [typeorm](http://typeorm.io/) that uses [cls-hooked](https://www.npmjs.com/package/cls-hooked) to handle and propagate transactions between different repositories and service methods.
 
@@ -11,7 +9,7 @@ See [Changelog](CHANGELOG.md)
 ## Installation
 
 ```shell
-npm install --save typeorm-transactional-cls-hooked
+npm install --save typeorm-transactional-decorator
 ## Needed dependencies
 npm install --save typeorm reflect-metadata
 ```
