@@ -17,7 +17,7 @@ npm install --save typeorm reflect-metadata
 Or
 
 ```shell
-yarn add typeorm-transactional-cls-hooked
+yarn add typeorm-transactional-decorator
 ## Needed dependencies
 yarn add typeorm reflect-metadata
 ```
@@ -166,7 +166,7 @@ export class PostService {
 This can be accomplished in Jest with:
 
 ```typescript
-jest.mock('typeorm-transactional-cls-hooked', () => ({
+jest.mock('typeorm-transactional-decorator', () => ({
   Transactional: () => () => ({}),
   BaseRepository: class {},
 }));
